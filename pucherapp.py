@@ -128,6 +128,16 @@ def get_vehicle_wheel_bounds(vehicle_type, span_length, wheel_distance, center_m
             (1.3/span_length, 0.5*wheel_distance, 0.22)     # Rear right
         ]
     
+    elif vehicle_type == 'Service vehicle':
+        wheels = [
+            (-1.5/span_length, -0.65/span_length, 0.5),  # Front left
+            (1.5/span_length, -0.65/span_length, 0.5),   # Front right
+            (-1.5/span_length, 0.65/span_length, 0.25),   # Rear left
+            (1.5/span_length, 0.65/span_length, 0.25)     # Rear right
+        ]
+        wheel_width = 0.4/span_length
+        wheel_length = 0.4/span_length
+
     elif vehicle_type == 'LM1':
         wheels = [
             (-0.6/span_length, -0.5*wheel_distance, 0.5),  # Front left
@@ -143,8 +153,8 @@ def get_vehicle_wheel_bounds(vehicle_type, span_length, wheel_distance, center_m
             (0, -0.5*wheel_distance, 0.5),  # Front left
             (0, 0.5*wheel_distance, 0.5),   # Front right
         ]    
-        wheel_width = 0.4/span_length
-        wheel_length = 0.4/span_length
+        wheel_width = 0.6/span_length
+        wheel_length = 0.35/span_length
 
     # Rotate the vehicle 90 degrees if selected
     if orientation == '90° Rotation':
@@ -202,7 +212,7 @@ B_load = st.sidebar.number_input("Write a axle/boggie load in kN", value=200)
 # Dropdown for vehicle type
 vehicle_type = st.sidebar.selectbox(
     "Select Vehicle Type",
-    ("Typfordon b", "Typfordon c", "Typfordon d", "Typfordon e", "Typfordon f","LM1","LM2")
+    ("Typfordon b", "Typfordon c", "Typfordon d", "Typfordon e", "Typfordon f","LM1","LM2","Service vehicle")
 )
 # Dropdown for wheel distance
 wheel_distance = st.sidebar.selectbox(
