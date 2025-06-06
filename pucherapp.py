@@ -131,8 +131,8 @@ def get_vehicle_wheel_bounds(vehicle_type, span_length, wheel_distance, center_m
     elif vehicle_type == 'Service vehicle':
         wheels = [
             (-1.5/span_length, -0.65/span_length, 0.5),  # Front left
-            (1.5/span_length, -0.65/span_length, 0.5),   # Front right
-            (-1.5/span_length, 0.65/span_length, 0.25),   # Rear left
+            (1.5/span_length, -0.65/span_length, 0.25),   # Front right
+            (-1.5/span_length, 0.65/span_length, 0.5),   # Rear left
             (1.5/span_length, 0.65/span_length, 0.25)     # Rear right
         ]
         wheel_width = 0.4/span_length
