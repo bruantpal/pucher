@@ -194,12 +194,6 @@ selected_file = st.sidebar.selectbox("Choose a griddata file", griddata_files)
 # Load the selected griddata file
 file_path = os.path.join(griddata_dir, selected_file)
 
-# # Dropdown for griddata type
-# grid_type = st.sidebar.selectbox(
-#     "Select Griddata Type",
-#     ("Sine Wave", "Gaussian", "Random", "X * Y")
-# )
-
 x_grid = np.linspace(-1.5, 1.5, 600)  # Example grid
 y_grid = np.linspace(-0.5, 0.5, 200)  # Example grid
 
@@ -242,12 +236,6 @@ orientation = st.sidebar.selectbox(
 
 # Option to enable/disable second lane
 second_lane_enabled = st.sidebar.checkbox("Enable Second Lane")
-
-# Scale factor slider
-#scale_factor = st.sidebar.slider("Scale Factor", min_value=0.5, max_value=2.0, value=1.0, step=0.1)
-
-# # Generate griddata based on the selected grid type and scale factor
-# x_grid, y_grid, griddata = generate_sample_griddata(grid_type, scale_factor)
 
 # Get vehicle wheel bounds based on the selected vehicle type, centering method, orientation, and scale factor
 wheel_bounds = get_vehicle_wheel_bounds(vehicle_type, span_length, wheel_distance, center_method, orientation, wheel_to_center)
@@ -293,144 +281,3 @@ plot_griddata_with_wheels(griddata, x_grid, y_grid, wheel_bounds, average_values
 # Display the total average value as text
 st.write(f"Total Average Value: {total_average:.2f}")
 
-# Function to rotate vehicle bounds (same as before)
-# Function to apply offsets to vehicle bounds (same as before)
-# Function to plot griddata with wheels (same as before)
-# Define vehicles and griddata-related functions (same as before)
-
-# Optimization function to maximize the sum of average values
-# def optimize_vehicle_position(griddata, x_grid, y_grid, vehicle_bounds):
-#     best_config = None
-#     max_value = -np.inf
-
-#     # Define the search space for x/y offsets, rotation angles, and second lane options
-#     x_offset_range = np.linspace(-0.5 * span_length, 0.5 * span_length, num=5)  # Example search range
-#     y_offset_range = np.linspace(-0.5 * span_length, 0.5 * span_length, num=5)
-#     rotation_angles = [0, 90, 180]
-#     second_lane_options = [False, True]
-
-#     # Perform a grid search over all combinations
-#     for x_offset in x_offset_range:
-#         for y_offset in y_offset_range:
-#             for angle in rotation_angles:
-#                 for second_lane in second_lane_options:
-#                     # Apply offsets and rotation
-#                     updated_vehicle_bounds = apply_offsets_to_vehicle(vehicle_bounds, x_offset, y_offset)
-#                     rotated_vehicle_bounds = rotate_vehicle_bounds(updated_vehicle_bounds, angle)
-                    
-#                     # Calculate the average values for the first vehicle
-#                     average_values = [
-#                         calculate_average_over_rectangle(griddata, x_grid, y_grid, bounds[:4]) * bounds[4]
-#                         for bounds in rotated_vehicle_bounds
-#                     ]
-#                     total_avg_first_lane = sum(avg for avg in average_values if not np.isnan(avg))
-
-#                     # If the second lane is enabled, calculate the values for the second vehicle
-#                     total_avg_second_lane = 0
-#                     if second_lane:
-#                         second_lane_offset = 3.0
-#                         if angle == 90 or angle == 180:
-#                             second_lane_bounds = apply_offsets_to_vehicle(rotated_vehicle_bounds, second_lane_offset, 0.0)
-#                         else:
-#                             second_lane_bounds = apply_offsets_to_vehicle(rotated_vehicle_bounds, 0.0, second_lane_offset)
-#                         second_lane_bounds = rotate_vehicle_bounds(second_lane_bounds, angle)
-#                         second_lane_average_values = [
-#                             calculate_average_over_rectangle(griddata, x_grid, y_grid, bounds[:4]) * bounds[4] * 0.8
-#                             for bounds in second_lane_bounds
-#                         ]
-#                         total_avg_second_lane = sum(avg for avg in second_lane_average_values if not np.isnan(avg))
-
-#                     # Calculate the total sum of average values
-#                     total_sum = total_avg_first_lane + total_avg_second_lane
-
-#                     # If this is the best configuration, save it
-#                     if total_sum > max_value:
-#                         max_value = total_sum
-#                         best_config = {
-#                             'x_offset': x_offset,
-#                             'y_offset': y_offset,
-#                             'angle': angle,
-#                             'second_lane': second_lane,
-#                             'rotated_vehicle_bounds': rotated_vehicle_bounds,
-#                             'second_lane_bounds': second_lane_bounds if second_lane else [],
-#                             'average_values': average_values,
-#                             'second_lane_average_values': second_lane_average_values if second_lane else [],
-#                         }
-
-#     return best_config, max_value
-
-# # Main app logic with Streamlit
-# def main():
-#     st.title("Vehicle Positioning with Maximization")
-
-#     # Dropdown to select between grid data files
-#     grid_data_file = st.sidebar.selectbox("Select Grid Data", ["griddata_1.txt", "griddata_2.txt", "griddata_3.txt"])
-
-#     # Load grid data from the selected file
-#     griddata, x_grid, y_grid = load_griddata_from_file(grid_data_file)
-
-#     # Define span length for the vehicle
-#     span_length = 2.0  # You can customize this
-
-#     # Vehicle selection dropdown
-#     vehicle_selection = st.sidebar.selectbox("Select Vehicle", ["Vehicle 1", "Vehicle 2", "Maximized Value"])
-
-#     # X and Y offset sliders
-#     x_offset = st.sidebar.slider("X Offset", min_value=-0.5*span_length, max_value=0.5*span_length, value=0.0)
-#     y_offset = st.sidebar.slider("Y Offset", min_value=-0.5*span_length, max_value=0.5*span_length, value=0.0)
-
-#     # Rotation angle dropdown
-#     rotation_angle = st.sidebar.selectbox("Rotation Angle", [0, 90, 180])
-
-#     # Second lane checkbox
-#     second_lane_enabled = st.sidebar.checkbox("Enable Second Lane")
-
-#     # Maximize button
-#     if st.sidebar.button("Maximize"):
-#         best_config, max_value = optimize_vehicle_position(griddata, x_grid, y_grid, vehicle_bounds)
-#         st.session_state["maximized_vehicle"] = best_config  # Save the max configuration in session state
-#         st.sidebar.write(f"Maximized Value: {max_value:.2f}")
-    
-#     # If maximized vehicle exists, add it to the dropdown and plot it
-#     if "maximized_vehicle" in st.session_state:
-#         vehicle_selection = st.sidebar.selectbox("Select Vehicle", ["Vehicle 1", "Vehicle 2", "Maximized Value"])
-
-#         if vehicle_selection == "Maximized Value":
-#             best_config = st.session_state["maximized_vehicle"]
-#             plot_griddata_with_wheels(
-#                 griddata, x_grid, y_grid, best_config['rotated_vehicle_bounds'], best_config['average_values'],
-#                 best_config['second_lane'], best_config['second_lane_bounds'], best_config['second_lane_average_values']
-#             )
-#             st.write(f"Maximized Total Average: {max_value:.2f}")
-#         else:
-#             # Plot the selected vehicle (similar to previous logic)
-#             updated_vehicle_bounds = apply_offsets_to_vehicle(vehicle_bounds, x_offset, y_offset)
-#             rotated_vehicle_bounds = rotate_vehicle_bounds(updated_vehicle_bounds, rotation_angle)
-
-#             # Calculate and plot the values
-#             average_values = [
-#                 calculate_average_over_rectangle(griddata, x_grid, y_grid, bounds[:4]) * bounds[4]
-#                 for bounds in rotated_vehicle_bounds
-#             ]
-
-#             # Handle second lane logic (similar to previous logic)
-#             if second_lane_enabled:
-#                 second_lane_offset = 3.0
-#                 second_lane_bounds = apply_offsets_to_vehicle(rotated_vehicle_bounds, 0.0, second_lane_offset)
-#                 second_lane_bounds = rotate_vehicle_bounds(second_lane_bounds, rotation_angle)
-#                 second_lane_average_values = [
-#                     calculate_average_over_rectangle(griddata, x_grid, y_grid, bounds[:4]) * bounds[4] * 0.8
-#                     for bounds in second_lane_bounds
-#                 ]
-#                 plot_griddata_with_wheels(griddata, x_grid, y_grid, rotated_vehicle_bounds, average_values,
-#                                           second_lane_enabled, second_lane_bounds, second_lane_average_values)
-#             else:
-#                 plot_griddata_with_wheels(griddata, x_grid, y_grid, rotated_vehicle_bounds, average_values,
-#                                           second_lane_enabled, [], [])
-
-#             # Display the sum of the average values
-#             st.write(f"Total Average (First Lane): {sum(avg for avg in average_values if not np.isnan(avg)):.2f}")
-
-# # Call the main function to run the Streamlit app
-# if __name__ == "__main__":
-#     main()
