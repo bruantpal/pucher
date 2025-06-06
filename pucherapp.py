@@ -79,7 +79,7 @@ def plot_griddata_with_wheels(griddata, x_grid, y_grid, wheel_bounds, average_va
 
 
 # Updated function for calculating wheel bounds based on centering, rotation, and weight factors
-def get_vehicle_wheel_bounds(vehicle_type, span_length, wheel_distance, center_method, orientation, wheel_to_center=None):
+def get_vehicle_wheel_bounds(vehicle_type, span_length, wheel_distance, center_method, orientation, wheel_to_center=None, lane_width=3.0, load_intensity=2.5):
     wheel_width = 0.3/span_length
     wheel_length = 0.2/span_length
     wheel_distance = wheel_distance/span_length
@@ -156,6 +156,12 @@ def get_vehicle_wheel_bounds(vehicle_type, span_length, wheel_distance, center_m
         wheel_width = 0.6/span_length
         wheel_length = 0.35/span_length
 
+    elif vehicle_type == 'Distributed Load':
+        # Create a single rectangular area covering the entire span with specified width
+        wheels = [(0, 0, load_intensity)]  # Single load at center with intensity as weight
+        wheel_width = lane_width / span_length  # Width of traffic lane
+        wheel_length = 1.0  # Full span length (normalized to 1.0)
+
     # Rotate the vehicle 90 degrees if selected
     if orientation == '90° Rotation':
         wheels = [(y, -x, w) for x, y, w in wheels]
@@ -203,10 +209,16 @@ griddata = read_and_interpolate_griddata(file_path, x_grid, y_grid)
 # Sidebar dropdown for selecting a griddata file
 B_load = st.sidebar.number_input("Write a axle/boggie load in kN", value=200)
 
+# Additional parameters for distributed load
+lane_width = 3.0
+load_intensity = 2.5
+if vehicle_type == 'Distributed Load':
+    lane_width = st.sidebar.number_input("Traffic lane width (m)", value=3.0, step=0.1)
+    load_intensity = st.sidebar.number_input("Load intensity (kPa)", value=2.5, step=0.1)
 # Dropdown for vehicle type
 vehicle_type = st.sidebar.selectbox(
     "Select Vehicle Type",
-    ("Typfordon b", "Typfordon c", "Typfordon d", "Typfordon e", "Typfordon f","LM1","LM2","Service vehicle")
+    ("Typfordon b", "Typfordon c", "Typfordon d", "Typfordon e", "Typfordon f","LM1","LM2","Service vehicle","Distributed Load")
 )
 # Dropdown for wheel distance
 wheel_distance = st.sidebar.selectbox(
@@ -222,10 +234,19 @@ center_method = st.sidebar.selectbox(
 
 # Dropdown for wheel selection (only if centering around a specific wheel)
 wheel_to_center = None
-if center_method == 'Center Around Wheel':
+if center_method == 'Center Around Wheel' and vehicle_type != 'Distributed Load':
+    if vehicle_type in ['Typfordon b', 'Typfordon c', 'Typfordon d', 'LM1', 'Service vehicle']:
+        max_wheels = 4
+    elif vehicle_type in ['Typfordon e', 'Typfordon f']:
+        max_wheels = 6
+    elif vehicle_type == 'LM2':
+        max_wheels = 2
+    else:
+        max_wheels = 4
+
     wheel_to_center = st.sidebar.selectbox(
         "Select Wheel to Center",
-        list(range(4 if vehicle_type in ['Typfordon b', 'Typfordon c', 'Typfordon d'] else 6 if vehicle_type in ['Typfordon e', 'Typfordon f'] else 8))
+        list(range(max_wheels))
     )
 
 # Dropdown for vehicle orientation
@@ -238,13 +259,20 @@ orientation = st.sidebar.selectbox(
 second_lane_enabled = st.sidebar.checkbox("Enable Second Lane")
 
 # Get vehicle wheel bounds based on the selected vehicle type, centering method, orientation, and scale factor
-wheel_bounds = get_vehicle_wheel_bounds(vehicle_type, span_length, wheel_distance, center_method, orientation, wheel_to_center)
+wheel_bounds = get_vehicle_wheel_bounds(vehicle_type, span_length, wheel_distance, center_method, orientation, wheel_to_center, lane_width, load_intensity)
 
 # Calculate average values for each wheel
-average_values = [
-    calculate_average_over_rectangle(griddata, x_grid, y_grid, bounds[:4]) * bounds[4]*B_load/8/math.pi
-    for bounds in wheel_bounds
-]
+if vehicle_type == 'Distributed Load':
+    # For distributed load, multiply by the area and load intensity directly
+    average_values = [
+        calculate_average_over_rectangle(griddata, x_grid, y_grid, bounds[:4]) * bounds[4] * (bounds[1]-bounds[0]) * (bounds[3]-bounds[2]) * span_length * span_length
+        for bounds in wheel_bounds
+    ]
+else:
+    average_values = [
+        calculate_average_over_rectangle(griddata, x_grid, y_grid, bounds[:4]) * bounds[4]*B_load/8/math.pi
+        for bounds in wheel_bounds
+    ]
 
 # Sum the average values for the first lane vehicle
 total_average = np.nansum(average_values)
@@ -264,10 +292,16 @@ if second_lane_enabled:
         second_lane_bounds = [(xmin, xmax, ymin + lane_distance, ymax + lane_distance, load_factor * 0.8) for xmin, xmax, ymin, ymax, weight in wheel_bounds]
 
     # Calculate average values for the second lane vehicle
-    second_lane_average_values = [
-        calculate_average_over_rectangle(griddata, x_grid, y_grid, bounds[:4]) * bounds[4]*B_load/8/math.pi
-        for bounds in second_lane_bounds
-    ]
+    if vehicle_type == 'Distributed Load':
+        second_lane_average_values = [
+            calculate_average_over_rectangle(griddata, x_grid, y_grid, bounds[:4]) * bounds[4] * (bounds[1]-bounds[0]) * (bounds[3]-bounds[2]) * span_length * span_length
+            for bounds in second_lane_bounds
+        ]
+    else:
+        second_lane_average_values = [
+            calculate_average_over_rectangle(griddata, x_grid, y_grid, bounds[:4]) * bounds[4]*B_load/8/math.pi
+            for bounds in second_lane_bounds
+        ]
     
     # Sum the average values for the second lane vehicle
     total_average += np.nansum(second_lane_average_values)
@@ -280,4 +314,3 @@ plot_griddata_with_wheels(griddata, x_grid, y_grid, wheel_bounds, average_values
 
 # Display the total average value as text
 st.write(f"Total Average Value: {total_average:.2f}")
-
